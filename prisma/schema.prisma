@@ -1,0 +1,160 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  email String @unique
+  password String?
+  name String @default("no name")
+  picture String? @default("https://i.pravatar.cc/150?u=a042581f4e29026704d")
+  stores Store[]
+  favorites Product[]
+  reviews Review[]
+  orders Order[]
+
+  @@map("user")
+}
+
+model Store {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  title String
+  description String?
+  image String? @default("https://placeimg.com/640/480/any")
+  userId String @map("user_id")
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  products Product[]
+  categories Category[]
+  colors Color[]
+
+  reviews Review[]
+  orderItems OrderItem[]
+
+
+  @@map("store")
+}
+
+model Product {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  title String
+  description String
+  images String[]
+  price Int @default(0)
+  storeId String @map("store_id")
+  store Store? @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  categoryId String? @map("category_id")
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  colorId String? @map("color_id")
+  color Color? @relation( fields: [colorId], references: [id], onDelete: Cascade)
+
+  userId String? @map("user_id")
+  user User? @relation( fields: [userId], references: [id], onDelete: Cascade)
+
+  reviews Review[]
+
+  orderItems OrderItem[]
+ 
+
+  @@map("product")
+}
+
+model Category {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  name String @unique
+  description String?
+  products Product[]
+  storeId String @map("store_id")
+  store Store? @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@map("category")
+}
+
+model Color {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  name String @unique
+  value String
+  products Product[]
+  storeId String @map("store_id")
+  store Store? @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@map("color")
+}
+
+model Review{
+  id String @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  text String
+  rating Int @default(0)
+
+  userId String? @map("user_id")
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  productId String @map("product_id")
+  product Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  storeId String? @map("store_id")
+  store Store? @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  @@map("review")
+}
+
+model Order {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  status OrderStatus @default(PENDING)
+  items OrderItem[]
+  total Int @default(0)
+  userId String? @map("user_id")
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("order")
+}
+
+model OrderItem {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  quantity Int @default(1)
+  price Int @default(0)
+ 
+  orderId String @map("order_id")
+  order Order? @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  storeId String @map("store_id")
+  store Store? @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  productId String @map("product_id")
+  product Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("order_item")
+}
+
+enum OrderStatus {
+  PENDING
+  PAYED
+}
